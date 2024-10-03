@@ -1,0 +1,5 @@
+LIBRARY   IAT_HOOK_DLL
+EXPORTS
+
+ExportFunction		@1	NONAME
+ExportNewFunction	@2	NONAME

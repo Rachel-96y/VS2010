@@ -1,0 +1,6 @@
+LIBRARY SetWindowLongA
+EXPORTS
+
+DriverProc					@1
+wodMessage					@2
+widMessage					@3

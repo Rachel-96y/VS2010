@@ -1,0 +1,4 @@
+LIBRARY   InlineHook
+EXPORTS
+
+Function		@1
