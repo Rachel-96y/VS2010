@@ -1,0 +1,6 @@
+LIBRARY Detect
+EXPORTS
+
+CreateSystemError			@1
+AntiVMWare					@2
+PreventDuplicateLaunch		@3

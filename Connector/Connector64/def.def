@@ -1,0 +1,4 @@
+LIBRARY Connector
+EXPORTS
+
+GetDataByFileMapping				@1

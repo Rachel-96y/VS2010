@@ -1,0 +1,5 @@
+LIBRARY Connector
+EXPORTS
+
+CreateProcessHideAndSendParameters		@1
+SendDataByFileMapping					@2
