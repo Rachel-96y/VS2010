@@ -18,6 +18,28 @@
 // 隐藏控制台
 // #pragma comment(linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"")
 
+int g_nIsFirstLaunch = NULL;
+// 检测是否当前程序仅被启动了一次;
+bool WINAPI PreventDuplicateLaunch(PTCHAR pzsFlag)
+{
+	if (g_nIsFirstLaunch++ != NULL)
+	{
+		return TRUE;
+	}
+	HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, pzsFlag);
+	if (hMutex != NULL)
+	{
+		CloseHandle(hMutex);
+		ExitProcess(0);
+	}
+	if (!CreateMutex(NULL, FALSE, pzsFlag))
+	{
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 // 宏
 #define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
@@ -175,7 +197,10 @@ todo:
 	}
 	g_Width = GetSystemMetrics(SM_CXSCREEN);
 	g_Height = GetSystemMetrics(SM_CYSCREEN);
+	// 这里需要...
+	// TODO
 	BOOL bRet = SetWindowPos(g_hEdge, NULL, g_Width, 0, g_Width * 2, g_Height, SWP_NOZORDER);
+	// BOOL bRet = SetWindowPos(g_hEdge, NULL, 0, 0, g_Width, g_Height, SWP_NOZORDER);
 	if (!bRet)
 	{
 		MessageBoxA(0, "浏览器位置移动失败!", "失败!", 0);
@@ -200,19 +225,31 @@ todo:
 	VARIANT y;
 	while(TRUE)
 	{	
-	long lRet = dmObj -> FindPic(g_Width, g_Width, g_Width + g_Width / 2, g_Height, "1.bmp", "000000", 0.5, 1, &x, &y);
-	if (lRet == -1)
-	{
-		Sleep(1000);
-		continue;
+		long lRet = dmObj -> FindPic(0, 0, g_Width * 2, g_Height, "1.bmp", "050505", 0.98, 1, &x, &y);
+		if (x.boolVal >= 0 && y.boolVal >= 0)
+		{
+			// 关闭还原页面
+			HWND hWindow = FindWindowA("Chrome_WidgetWin_1", "还原页面");
+			if (hWindow)
+			{
+				SendMessageA(hWindow, WM_CLOSE, 0, 0);
+			}
+			// 模拟物理鼠标双击
+			SetCursorPos(g_Width * 2 + 200, g_Height / 2 + 200); // 设置鼠标位置
+			mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0); // 按下左键
+			mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);   // 松开左键
+			mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0); // 再次按下左键
+			mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);   // 再次松开左键
+			SetCursorPos(g_Width / 2, g_Height / 2); // 设置鼠标位置
+			Sleep(2000);
+			continue;
+		}
+		else
+		{			
+			Sleep(2000);
+			continue;
+		}
 	}
-		break;
-	}
-	// 模拟物理鼠标双击
-	SetCursorPos(g_Width * 2 + 200, g_Height / 2 + 200); // 设置鼠标位置
-	mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0); // 按下左键
-	mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);   // 松开左键
-	SetCursorPos(50, 50); // 设置鼠标位置
 	return;
 }
 
@@ -341,10 +378,12 @@ BOOL CDMDlg::OnInitDialog()
 	Idmsoft* dm = InitNewDm();
 	
 	// 对浏览器的操作
+	PreventDuplicateLaunch(L"FixEdge");
 	CloseEdge();
 	CreateEdge();
 	MoveEdge();
 	MaximizeEdge(dm);
+	ExitProcess(2);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
