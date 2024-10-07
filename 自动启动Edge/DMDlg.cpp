@@ -187,17 +187,24 @@ int g_Width = NULL;
 int g_Height = NULL;
 
 // 移动浏览器窗口到另外一块屏幕上
-VOID MoveEdge()
+BOOL MoveEdge()
 {
+	int nCount = NULL;
 todo:
 	g_hEdge = FindWindowW(L"Chrome_WidgetWin_1", L"CCTV-3综艺频道高清直播_CCTV节目官网_央视网 - 个人 - Microsoft​ Edge");
 	if (!g_hEdge)
 	{
+		// 超时保护
+		Sleep(1000);
+		nCount++;
+		if (nCount > 5)
+		{
+			return -1; 
+		}
 		goto todo;
 	}
 	g_Width = GetSystemMetrics(SM_CXSCREEN);
 	g_Height = GetSystemMetrics(SM_CYSCREEN);
-	// 这里需要...
 	// TODO
 	BOOL bRet = SetWindowPos(g_hEdge, NULL, g_Width, 0, g_Width * 2, g_Height, SWP_NOZORDER);
 	// BOOL bRet = SetWindowPos(g_hEdge, NULL, 0, 0, g_Width, g_Height, SWP_NOZORDER);
@@ -206,7 +213,7 @@ todo:
 		MessageBoxA(0, "浏览器位置移动失败!", "失败!", 0);
 		ExitProcess(-3);
 	}
-	return;
+	return 0;
 }
 
 // 浏览器中视频最大化
@@ -377,11 +384,18 @@ BOOL CDMDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	Idmsoft* dm = InitNewDm();
 	
+
 	// 对浏览器的操作
+	int nRet = NULL;
 	PreventDuplicateLaunch(L"FixEdge");
+RESET:
 	CloseEdge();
 	CreateEdge();
-	MoveEdge();
+	nRet = MoveEdge();
+	if (nRet == -1)
+	{
+		goto RESET;
+	}
 	MaximizeEdge(dm);
 	ExitProcess(2);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
